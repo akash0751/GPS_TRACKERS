@@ -30,7 +30,6 @@ const GpsApp = () => {
           'Unknown'
         );
       }
-      return 'Unknown';
     } catch (err) {
       console.error('Error fetching city name:', err);
       return 'Unknown';
