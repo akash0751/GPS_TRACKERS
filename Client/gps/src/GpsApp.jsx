@@ -57,7 +57,7 @@ const GpsApp = () => {
 
         // Send name + location to server
         socket.emit('send-location', {
-          name: name.trim(),
+          name: name,
           latitude,
           longitude,
           place: city,
