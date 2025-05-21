@@ -3,7 +3,7 @@ import { io } from 'socket.io-client';
 import LocationDisplay from './LocationDisplay';
 import './App.css';
 
-const socket = io('http://localhost:5000');
+const socket = io('https://gps-trackers-1.onrender.com');
 
 const GpsApp = () => {
   const [myLocation, setMyLocation] = useState({ latitude: 0, longitude: 0 });
