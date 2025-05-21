@@ -13,6 +13,7 @@ const GpsApp = () => {
   const [othersPlaces, setOthersPlaces] = useState({});
 
   const getCityName = async (lat, lng) => {
+    console.log("Fetching city name for:", lat, lng);
     const apiKey = '96a9af76331d437f9e067eea4bb78e6a';
     try {
       const response = await fetch(
@@ -37,7 +38,8 @@ const GpsApp = () => {
   };
 
   useEffect(() => {
-    if (!name) return; // Only start geolocation when name is set
+    console.log("Others locations changed:", othersLocations);
+    if (!name.trim()) return; // Only start geolocation when name is set (trim here)
 
     if (navigator.geolocation) {
       navigator.geolocation.watchPosition(
@@ -46,8 +48,8 @@ const GpsApp = () => {
           const location = { latitude, longitude };
           setMyLocation(location);
 
-          // Send location + name to server
-          socket.emit('send-location', { name, latitude, longitude });
+          // Send location + trimmed name to server
+          socket.emit('send-location', { name: name.trim(), latitude, longitude });
 
           const city = await getCityName(latitude, longitude);
           setCityName(city);
@@ -91,8 +93,8 @@ const GpsApp = () => {
     }
   }, [othersLocations]);
 
-  // Render name input if not set
-  if (!name) {
+  // Show input if name not entered or just spaces
+  if (!name.trim()) {
     return (
       <div className="GpsApp">
         <h1>🌐 Real-Time GPS Tracker</h1>
@@ -100,8 +102,10 @@ const GpsApp = () => {
           Enter your name:{' '}
           <input
             type="text"
-            onChange={(e) => setName(e.target.value.trim())}
-            placeholder="Your name"
+            value={name}
+            onChange={(e) => setName(e.target.value)} // raw input, no trim here
+            placeholder="Your full name"
+            autoFocus
           />
         </label>
       </div>
@@ -131,7 +135,7 @@ const GpsApp = () => {
         id !== socket.id ? (
           <LocationDisplay
             key={id}
-            title={loc.name || `User ${id}`}
+            title={loc.name || `User ${id.slice(0, 5)}`}
             latitude={loc.latitude}
             longitude={loc.longitude}
             place={othersPlaces[id] || 'Loading...'}
