@@ -12,25 +12,21 @@ const GpsApp = () => {
   const [othersLocations, setOthersLocations] = useState({}); // { socketId: { name, latitude, longitude } }
   const [othersPlaces, setOthersPlaces] = useState({});
 
-  const getCityName = async (lat, lng) => {
-  const apiKey = 'cf0ba473ee9245a4a862c2c9dda7e54f';
+ const getCityName = async (lat, lng) => {
   try {
     const response = await fetch(
-      `https://api.opencagedata.com/geocode/v1/json?q=${lat}+${lng}&key=${apiKey}`
+      `https://nominatim.openstreetmap.org/reverse?lat=${lat}&lon=${lng}&format=json`
     );
     const data = await response.json();
 
-    if (data.results.length > 0) {
-      const components = data.results[0].components;
-      console.log('OpenCage components:', components);  // <-- log components here
-
+    if (data.address) {
       return (
-        components.town ||
-        components.city ||
-        components.village ||
-        components.county ||
-        components.state_district ||  // added this fallback
-        components.state ||           // added this fallback
+        data.address.town ||
+        data.address.city ||
+        data.address.village ||
+        data.address.county ||
+        data.address.state ||
+        data.address.country ||
         'Unknown'
       );
     }
@@ -39,6 +35,7 @@ const GpsApp = () => {
   }
   return 'Unknown';
 };
+
 
 
   useEffect(() => {
