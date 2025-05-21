@@ -25,8 +25,8 @@ const users = {}; // To track users
 io.on('connection', (socket) => {
   console.log('Client connected:', socket.id);
 
-  socket.on('send-location', (location) => {
-    users[socket.id] = location; // Save user location
+  socket.on('send-location', ({ name, latitude, longitude }) => {
+    users[socket.id] =  { name, latitude, longitude }; // Save user location
     io.emit('receive-locations', users); // Send all users' locations
   });
 

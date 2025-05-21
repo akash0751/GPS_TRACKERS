@@ -111,7 +111,7 @@ const GpsApp = () => {
         id !== socket.id ? (
           <LocationDisplay
             key={id}
-            title={`User ${id.slice(0, 5)}`}
+            title={`User ${loc.name.slice(0, 5)}`}
             latitude={loc.latitude}
             longitude={loc.longitude}
             place={othersPlaces[id] || 'Loading...'}
