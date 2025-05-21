@@ -99,7 +99,7 @@ const GpsApp = () => {
             value={name}
             onChange={(e) => setName(e.target.value)}
             placeholder="Your full name"
-            autoFocus
+            
           />
         </label>
       </div>
