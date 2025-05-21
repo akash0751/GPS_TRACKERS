@@ -6,12 +6,12 @@ import './App.css';
 const socket = io('https://gps-trackers-1.onrender.com');
 
 const GpsApp = () => {
+  const [name, setName] = useState('');
   const [myLocation, setMyLocation] = useState({ latitude: 0, longitude: 0 });
   const [cityName, setCityName] = useState('');
-  const [othersLocations, setOthersLocations] = useState({}); // { userId: {latitude, longitude} }
-  const [othersPlaces, setOthersPlaces] = useState({}); // { userId: cityName }
+  const [othersLocations, setOthersLocations] = useState({}); // { socketId: { name, latitude, longitude } }
+  const [othersPlaces, setOthersPlaces] = useState({});
 
-  // Function to get city/place name from lat,lng
   const getCityName = async (lat, lng) => {
     const apiKey = '96a9af76331d437f9e067eea4bb78e6a';
     try {
@@ -37,13 +37,17 @@ const GpsApp = () => {
   };
 
   useEffect(() => {
+    if (!name) return; // Only start geolocation when name is set
+
     if (navigator.geolocation) {
       navigator.geolocation.watchPosition(
         async (position) => {
           const { latitude, longitude } = position.coords;
           const location = { latitude, longitude };
           setMyLocation(location);
-          socket.emit('send-location', location);
+
+          // Send location + name to server
+          socket.emit('send-location', { name, latitude, longitude });
 
           const city = await getCityName(latitude, longitude);
           setCityName(city);
@@ -62,9 +66,9 @@ const GpsApp = () => {
     return () => {
       socket.disconnect();
     };
-  }, []);
+  }, [name]);
 
-  // Whenever othersLocations updates, fetch place names for others
+  // Fetch places for others
   useEffect(() => {
     const fetchPlaces = async () => {
       const entries = Object.entries(othersLocations);
@@ -73,7 +77,6 @@ const GpsApp = () => {
       await Promise.all(
         entries.map(async ([id, loc]) => {
           if (id !== socket.id) {
-            // fetch city name for this user's location
             const city = await getCityName(loc.latitude, loc.longitude);
             newPlaces[id] = city;
           }
@@ -88,6 +91,23 @@ const GpsApp = () => {
     }
   }, [othersLocations]);
 
+  // Render name input if not set
+  if (!name) {
+    return (
+      <div className="GpsApp">
+        <h1>🌐 Real-Time GPS Tracker</h1>
+        <label>
+          Enter your name:{' '}
+          <input
+            type="text"
+            onChange={(e) => setName(e.target.value.trim())}
+            placeholder="Your name"
+          />
+        </label>
+      </div>
+    );
+  }
+
   return (
     <div className="GpsApp">
       <h1>🌐 Real-Time GPS Tracker</h1>
@@ -98,20 +118,20 @@ const GpsApp = () => {
       {/* My location */}
       {myLocation.latitude !== 0 && (
         <LocationDisplay
-          title="My Location"
+          title={`${name} (You)`}
           latitude={myLocation.latitude}
           longitude={myLocation.longitude}
           place={cityName}
         />
       )}
 
-      {/* Other users' locations */}
+      {/* Other users */}
       <h2>🧑‍🤝‍🧑 Other Users:</h2>
       {Object.entries(othersLocations).map(([id, loc]) =>
         id !== socket.id ? (
           <LocationDisplay
             key={id}
-            title={`User ${loc.name.slice(0, 5)}`}
+            title={loc.name || `User ${id.slice(0, 5)}`}
             latitude={loc.latitude}
             longitude={loc.longitude}
             place={othersPlaces[id] || 'Loading...'}
