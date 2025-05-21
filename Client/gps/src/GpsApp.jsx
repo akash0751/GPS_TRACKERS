@@ -9,13 +9,12 @@ const GpsApp = () => {
   const [name, setName] = useState('');
   const [myLocation, setMyLocation] = useState({ latitude: 0, longitude: 0 });
   const [cityName, setCityName] = useState('');
-  const [othersLocations, setOthersLocations] = useState({}); // { socketId: { name, latitude, longitude } }
-  const [othersPlaces, setOthersPlaces] = useState({});
+  const [othersLocations, setOthersLocations] = useState({});
 
+  // Fetch place name from lat/lng using OpenCage API
   const getCityName = async (lat, lng) => {
-    console.log("Fetching city name for:", lat, lng);
-    const apiKey = '96a9af76331d437f9e067eea4bb78e6a';
     try {
+      const apiKey = '96a9af76331d437f9e067eea4bb78e6a';
       const response = await fetch(
         `https://api.opencagedata.com/geocode/v1/json?q=${lat}+${lng}&key=${apiKey}`
       );
@@ -31,69 +30,64 @@ const GpsApp = () => {
           'Unknown'
         );
       }
+      return 'Unknown';
     } catch (err) {
       console.error('Error fetching city name:', err);
+      return 'Unknown';
     }
-    return 'Unknown';
   };
 
+  // Watch geolocation only after a valid name is entered
   useEffect(() => {
-    console.log("Others locations changed:", othersLocations);
-    if (!name.trim()) return; // Only start geolocation when name is set (trim here)
+    if (!name.trim()) return;
 
-    if (navigator.geolocation) {
-      navigator.geolocation.watchPosition(
-        async (position) => {
-          const { latitude, longitude } = position.coords;
-          const location = { latitude, longitude };
-          setMyLocation(location);
-
-          // Send location + trimmed name to server
-          socket.emit('send-location', { name: name.trim(), latitude, longitude });
-
-          const city = await getCityName(latitude, longitude);
-          setCityName(city);
-        },
-        (error) => {
-          console.error('GPS Error:', error);
-        },
-        { enableHighAccuracy: true }
-      );
+    if (!navigator.geolocation) {
+      alert('Geolocation is not supported by your browser');
+      return;
     }
 
+    const watcherId = navigator.geolocation.watchPosition(
+      async (position) => {
+        const { latitude, longitude } = position.coords;
+        setMyLocation({ latitude, longitude });
+
+        // Get city name for own location
+        const city = await getCityName(latitude, longitude);
+        setCityName(city);
+
+        // Send name + location to server
+        socket.emit('send-location', {
+          name: name.trim(),
+          latitude,
+          longitude,
+          place: city,
+        });
+      },
+      (error) => {
+        console.error('GPS Error:', error);
+      },
+      { enableHighAccuracy: true }
+    );
+
+    // Cleanup geolocation watcher on unmount or name change
+    return () => {
+      navigator.geolocation.clearWatch(watcherId);
+    };
+  }, [name]);
+
+  // Listen for others' locations from server
+  useEffect(() => {
     socket.on('receive-locations', (locations) => {
       setOthersLocations(locations);
     });
 
     return () => {
+      socket.off('receive-locations');
       socket.disconnect();
     };
-  }, [name]);
+  }, []);
 
-  // Fetch places for others
-  useEffect(() => {
-    const fetchPlaces = async () => {
-      const entries = Object.entries(othersLocations);
-      const newPlaces = {};
-
-      await Promise.all(
-        entries.map(async ([id, loc]) => {
-          if (id !== socket.id) {
-            const city = await getCityName(loc.latitude, loc.longitude);
-            newPlaces[id] = city;
-          }
-        })
-      );
-
-      setOthersPlaces(newPlaces);
-    };
-
-    if (Object.keys(othersLocations).length > 0) {
-      fetchPlaces();
-    }
-  }, [othersLocations]);
-
-  // Show input if name not entered or just spaces
+  // Show input until user enters a valid name
   if (!name.trim()) {
     return (
       <div className="GpsApp">
@@ -103,7 +97,7 @@ const GpsApp = () => {
           <input
             type="text"
             value={name}
-            onChange={(e) => setName(e.target.value)} // raw input, no trim here
+            onChange={(e) => setName(e.target.value)}
             placeholder="Your full name"
             autoFocus
           />
@@ -131,6 +125,7 @@ const GpsApp = () => {
 
       {/* Other users */}
       <h2>🧑‍🤝‍🧑 Other Users:</h2>
+      <div className="others-container">
       {Object.entries(othersLocations).map(([id, loc]) =>
         id !== socket.id ? (
           <LocationDisplay
@@ -138,10 +133,11 @@ const GpsApp = () => {
             title={loc.name || `User ${id.slice(0, 5)}`}
             latitude={loc.latitude}
             longitude={loc.longitude}
-            place={othersPlaces[id] || 'Loading...'}
+            place={loc.place || 'Unknown'}
           />
         ) : null
       )}
+      </div>
     </div>
   );
 };

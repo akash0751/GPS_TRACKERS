@@ -111,3 +111,11 @@ h1 {
   color: #4682b4;
   margin-bottom: 0.5rem;
 }
+
+.others-container {
+  display: flex;
+  flex-wrap: wrap; /* lets it wrap to next line if too long */
+  justify-content: center; /* center horizontally */
+  gap: 1rem; /* space between location boxes */
+  margin-top: 1rem;
+}
