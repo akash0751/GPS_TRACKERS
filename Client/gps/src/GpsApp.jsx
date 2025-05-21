@@ -13,7 +13,7 @@ const GpsApp = () => {
   const [othersPlaces, setOthersPlaces] = useState({});
 
   const getCityName = async (lat, lng) => {
-  const apiKey = '96a9af76331d437f9e067eea4bb78e6a';
+  const apiKey = 'cf0ba473ee9245a4a862c2c9dda7e54f';
   try {
     const response = await fetch(
       `https://api.opencagedata.com/geocode/v1/json?q=${lat}+${lng}&key=${apiKey}`
