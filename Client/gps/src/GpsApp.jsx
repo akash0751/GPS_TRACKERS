@@ -22,8 +22,8 @@ const GpsApp = () => {
     if (data.address) {
       return (
         data.address.town ||
-        data.address.city ||
         data.address.village ||
+        data.address.city ||
         data.address.county ||
         data.address.state ||
         data.address.country ||
