@@ -22,13 +22,8 @@ const GpsApp = () => {
 
       if (data.results.length > 0) {
         const components = data.results[0].components;
-        return (
-          components.town ||
-          components.village ||
-          components.county ||
-          components.city ||
-          'Unknown'
-        );
+const placeName = components.town || components.city || components.village || components.municipality || components.county || "Unknown";
+return placeName;
       }
     } catch (err) {
       console.error('Error fetching city name:', err);
