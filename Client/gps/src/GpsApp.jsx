@@ -24,9 +24,9 @@ const GpsApp = () => {
         const components = data.results[0].components;
         return (
           components.town ||
-          // components.city ||
           components.village ||
           components.county ||
+          components.city ||
           'Unknown'
         );
       }
@@ -47,7 +47,7 @@ const GpsApp = () => {
           setMyLocation(location);
 
           // Send location + trimmed name to server
-          socket.emit('send-location', { name: name.trim(), latitude, longitude });
+          socket.emit('send-location', { name, latitude, longitude });
 
           const city = await getCityName(latitude, longitude);
           setCityName(city);
@@ -97,13 +97,13 @@ const GpsApp = () => {
       <div className="GpsApp">
         <h1>🌐 Real-Time GPS Tracker</h1>
         <label>
-          Enter your name:{' '}
+          Enter your name:
           <input
             type="text"
             value={name}
             onChange={(e) => setName(e.target.value)} // raw input, no trim here
             placeholder="Your full name"
-            autoFocus
+            
           />
         </label>
       </div>
