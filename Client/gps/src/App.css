@@ -1,0 +1,113 @@
+.App {
+  text-align: center;
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+  padding: 2rem;
+  background: #f3f7fa;
+  min-height: 100vh;
+}
+
+h1 {
+  font-size: 2rem;
+  color: #333;
+  margin-bottom: 1rem;
+}
+
+.city-name {
+  font-size: 18px;
+  color: #555;
+  margin-bottom: 1.5rem;
+}
+
+.location-box {
+  border: 2px solid #87cefa;
+  background: #ffffff;
+  padding: 1rem 2rem;
+  margin: 1rem auto;
+  width: fit-content;
+  border-radius: 12px;
+  box-shadow: 0 0 8px rgba(0, 0, 0, 0.1);
+}
+
+.location-box h2 {
+  color: #4682b4;
+  margin-bottom: 0.5rem;
+}
+
+.auth-box {
+  background: #fff;
+  padding: 2rem;
+  width: 300px;
+  margin: auto;
+  border-radius: 10px;
+  box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+}
+
+.auth-box h2 {
+  margin-bottom: 1rem;
+  color: #333;
+}
+
+.auth-box input {
+  width: 100%;
+  padding: 0.6rem;
+  margin-bottom: 1rem;
+  border: 1px solid #aaa;
+  border-radius: 6px;
+}
+
+.auth-box button {
+  width: 100%;
+  padding: 0.7rem;
+  background: #007bff;
+  border: none;
+  color: white;
+  border-radius: 6px;
+  cursor: pointer;
+}
+
+.auth-box .error {
+  color: red;
+  font-size: 0.9rem;
+  margin-top: 0.5rem;
+}
+
+.auth-box .toggle {
+  color: #007bff;
+  cursor: pointer;
+  text-decoration: underline;
+}
+
+
+.GpsApp {
+  text-align: center;
+  padding: 2rem;
+  background: #f3f7fa;
+  min-height: 100vh;
+}
+
+h1 {
+  font-size: 2rem;
+  color: #333;
+  margin-bottom: 1rem;
+}
+
+.city-name {
+  font-size: 18px;
+  color: #555;
+  margin-bottom: 1.5rem;
+}
+
+.location-box {
+  border: 2px solid #87cefa;
+  background: #ffffff;
+  padding: 1rem 2rem;
+  margin: 1rem auto;
+  width: fit-content;
+  border-radius: 12px;
+  box-shadow: 0 0 8px rgba(0, 0, 0, 0.1);
+}
+
+.location-box h2 {
+  color: #4682b4;
+  margin-bottom: 0.5rem;
+}
