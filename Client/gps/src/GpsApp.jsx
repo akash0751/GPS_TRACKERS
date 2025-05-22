@@ -7,49 +7,50 @@ const socket = io('https://gps-trackers-1.onrender.com');
 
 const GpsApp = () => {
   const [name, setName] = useState('');
+  const [isStarted, setIsStarted] = useState(false);
   const [myLocation, setMyLocation] = useState({ latitude: 0, longitude: 0 });
   const [cityName, setCityName] = useState('');
-  const [othersLocations, setOthersLocations] = useState({}); // { socketId: { name, latitude, longitude } }
+  const [othersLocations, setOthersLocations] = useState({});
   const [othersPlaces, setOthersPlaces] = useState({});
 
- const getCityName = async (lat, lng) => {
-  try {
-    const response = await fetch(
-      `https://nominatim.openstreetmap.org/reverse?lat=${lat}&lon=${lng}&format=json`
-    );
-    const data = await response.json();
-
-    if (data.address) {
-      return (
-        data.address.town ||
-        data.address.village ||
-        data.address.city ||
-        data.address.county ||
-        data.address.state ||
-        data.address.country ||
-        'Unknown'
+  const getCityName = async (lat, lng) => {
+    try {
+      const response = await fetch(
+        `https://nominatim.openstreetmap.org/reverse?lat=${lat}&lon=${lng}&format=json`
       );
+      const data = await response.json();
+      if (data.address) {
+        return (
+          data.address.town ||
+          data.address.village ||
+          data.address.city ||
+          data.address.county ||
+          data.address.state ||
+          data.address.country ||
+          'Unknown'
+        );
+      }
+    } catch (err) {
+      console.error('Error fetching city name:', err);
     }
-  } catch (err) {
-    console.error('Error fetching city name:', err);
-  }
-  return 'Unknown';
-};
-
-
+    return 'Unknown';
+  };
 
   useEffect(() => {
-    if (!name.trim()) return; // Only start geolocation when name is set (trim here)
+    if (!isStarted || !name.trim()) return;
 
     if (navigator.geolocation) {
-      navigator.geolocation.watchPosition(
+      const watchId = navigator.geolocation.watchPosition(
         async (position) => {
           const { latitude, longitude } = position.coords;
           const location = { latitude, longitude };
           setMyLocation(location);
 
-          // Send location + trimmed name to server
-          socket.emit('send-location', { name: name.trim(), latitude, longitude });
+          socket.emit('send-location', {
+            name: name.trim(),
+            latitude,
+            longitude,
+          });
 
           const city = await getCityName(latitude, longitude);
           setCityName(city);
@@ -59,18 +60,18 @@ const GpsApp = () => {
         },
         { enableHighAccuracy: true }
       );
+
+      socket.on('receive-locations', (locations) => {
+        setOthersLocations(locations);
+      });
+
+      return () => {
+        navigator.geolocation.clearWatch(watchId);
+        socket.disconnect();
+      };
     }
+  }, [isStarted, name]);
 
-    socket.on('receive-locations', (locations) => {
-      setOthersLocations(locations);
-    });
-
-    return () => {
-      socket.disconnect();
-    };
-  }, [name]);
-
-  // Fetch places for others
   useEffect(() => {
     const fetchPlaces = async () => {
       const entries = Object.entries(othersLocations);
@@ -93,55 +94,67 @@ const GpsApp = () => {
     }
   }, [othersLocations]);
 
-  // Show input if name not entered or just spaces
-  if (!name.trim()) {
+  // === UI ===
+  if (!isStarted) {
     return (
-      <div className="GpsApp">
-        <h1>🌐 Real-Time GPS Tracker</h1>
-        <label>
-          Enter your name:{' '}
-          <input
-            type="text"
-            value={name}
-            onChange={(e) => setName(e.target.value)} // raw input, no trim here
-            placeholder="Your full name"
-            autoFocus
-          />
-        </label>
+      <div className="container py-5 text-center">
+        <div className="card p-4 shadow mx-auto" style={{ maxWidth: '400px' }}>
+          <h2 className="mb-4">🌐 Real-Time GPS Tracker</h2>
+          <div className="form-group mb-3">
+            <input
+              type="text"
+              className="form-control"
+              placeholder="Enter your full name"
+              value={name}
+              onChange={(e) => setName(e.target.value)}
+              autoFocus
+            />
+          </div>
+          <button
+            className="btn btn-primary w-100"
+            onClick={() => setIsStarted(true)}
+            disabled={!name.trim()}
+          >
+            Start Tracking
+          </button>
+        </div>
       </div>
     );
   }
 
   return (
-    <div className="GpsApp">
-      <h1>🌐 Real-Time GPS Tracker</h1>
-      <p className="city-name">
-        📍 City: <strong>{cityName}</strong>
-      </p>
+    <div className="container py-4">
+      <div className="text-center mb-4">
+        <h1 className="mb-2">🌐 Real-Time GPS Tracker</h1>
+        <p className="lead">
+          📍 City: <strong>{cityName}</strong>
+        </p>
+      </div>
 
-      {/* My location */}
-      {myLocation.latitude !== 0 && (
+      <div className="mb-4">
         <LocationDisplay
           title={`${name} (You)`}
           latitude={myLocation.latitude}
           longitude={myLocation.longitude}
           place={cityName}
         />
-      )}
+      </div>
 
-      {/* Other users */}
-      <h2>🧑‍🤝‍🧑 Other Users:</h2>
-      {Object.entries(othersLocations).map(([id, loc]) =>
-        id !== socket.id ? (
-          <LocationDisplay
-            key={id}
-            title={loc.name || `User ${id}`}
-            latitude={loc.latitude}
-            longitude={loc.longitude}
-            place={othersPlaces[id] || 'Loading...'}
-          />
-        ) : null
-      )}
+      <h4>🧑‍🤝‍🧑 Other Users:</h4>
+      <div className="row">
+        {Object.entries(othersLocations).map(([id, loc]) =>
+          id !== socket.id ? (
+            <div className="col-md-6 mb-3" key={id}>
+              <LocationDisplay
+                title={loc.name || `User ${id}`}
+                latitude={loc.latitude}
+                longitude={loc.longitude}
+                place={othersPlaces[id] || 'Loading...'}
+              />
+            </div>
+          ) : null
+        )}
+      </div>
     </div>
   );
 };
